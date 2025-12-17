@@ -7,7 +7,7 @@
  */
 
 chrome.runtime.onInstalled.addListener(() => {
-    // ... rest of your code ...
+
 chrome.runtime.onInstalled.addListener(() => {
     chrome.alarms.create("checkPrices", { periodInMinutes: 60 });
 });
@@ -32,7 +32,7 @@ async function checkAllPrices() {
     // Check items one by one
     for (const item of watchlist) {
         await checkItemWithTab(item);
-        // Wait 5 seconds between checks so your browser doesn't freeze
+        // Waits 5 seconds between checks so your browser doesn't freeze
         await new Promise(r => setTimeout(r, 5000));
     }
 }
@@ -41,22 +41,22 @@ function checkItemWithTab(item) {
     return new Promise((resolve) => {
         console.log(`🔎 Opening tab for: ${item.title.substring(0, 15)}...`);
 
-        // 1. Create a tab (active: false means it opens in background)
+        // 1. Creates a tab (active: false means it opens in background)
         chrome.tabs.create({ url: item.url, active: false }, (tab) => {
             
-            // 2. Wait 5 seconds for Daraz to load completely
+            // 2. Waits 5 seconds for Daraz to load completely
             setTimeout(() => {
                 
-                // 3. Inject a script into that tab to read the price
+                // 3. Injects a script into that tab to read the price
                 chrome.scripting.executeScript({
                     target: { tabId: tab.id },
                     func: scrapePriceFromPage, // The function below runs inside the tab
                 }, (results) => {
                     
-                    // 4. Close the tab immediately
+                    // 4. Closes the tab immediately
                     chrome.tabs.remove(tab.id);
 
-                    // 5. Handle the result
+                    // 5. Handles the result
                     if (chrome.runtime.lastError || !results || !results[0]) {
                         console.log("   ❌ Failed to scrape tab.");
                     } else {
@@ -97,7 +97,7 @@ function updatePriceAndNotify(item, newPrice) {
 
 // --- THIS FUNCTION RUNS INSIDE THE DARAZ PAGE ---
 function scrapePriceFromPage() {
-    // Strategy 1: Look for the JSON data (Best)
+    
     try {
         const jsonEl = document.querySelector('script[type="application/ld+json"]');
         if (jsonEl) {
@@ -107,7 +107,7 @@ function scrapePriceFromPage() {
         }
     } catch (e) {}
 
-    // Strategy 2: Look for the visual price (Backup)
+    
     const priceEl = document.querySelector('.pdp-price_type_normal') || 
                     document.querySelector('.pdp-price') ||
                     document.querySelector('[data-spm-anchor-id] span'); // Generic fallback
@@ -115,5 +115,4 @@ function scrapePriceFromPage() {
     if (priceEl) {
         return parseFloat(priceEl.innerText.replace(/[^\d.]/g, ''));
     }
-    return 0; // Failed
-}
+    return 0; // Failed to find price
