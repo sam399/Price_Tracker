@@ -1,0 +1,98 @@
+body {
+    width: 320px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+}
+
+header {
+    background-color: #f85606; /* Daraz Orange */
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+#status {
+    padding: 10px;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+}
+
+button {
+    width: 90%;
+    margin: 10px 5%;
+    padding: 12px;
+    background-color: #f85606;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background-color: #d04505;
+}
+
+h4 {
+    margin: 15px 15px 5px 15px;
+    color: #333;
+    font-size: 14px;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 5px;
+}
+
+#list {
+    padding: 0 15px 15px 15px;
+}
+
+.item {
+    background: white;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.item-info {
+    width: 70%;
+}
+
+.item-title {
+    font-size: 12px;
+    color: #333;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.item-price {
+    font-size: 14px;
+    font-weight: bold;
+    color: #f85606;
+}
+
+.item-link {
+    font-size: 10px;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.delete-btn {
+    color: #999;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 5px;
+}
+.delete-btn:hover { color: red; }
