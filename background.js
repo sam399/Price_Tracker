@@ -108,11 +108,12 @@ function scrapePriceFromPage() {
     } catch (e) {}
 
     
-    const priceEl = document.querySelector('.pdp-price_type_normal') || 
-                    document.querySelector('.pdp-price') ||
-                    document.querySelector('[data-spm-anchor-id] span'); // Generic fallback
-                    
-    if (priceEl) {
-        return parseFloat(priceEl.innerText.replace(/[^\d.]/g, ''));
+        const priceEl = document.querySelector('.pdp-price_type_normal') || 
+                        document.querySelector('.pdp-price') ||
+                        document.querySelector('[data-spm-anchor-id] span'); // Generic fallback
+                        
+        if (priceEl) {
+            return parseFloat(priceEl.innerText.replace(/[^\d.]/g, ''));
+        }
+        return 0; // Failed to find price
     }
-    return 0; // Failed to find price
