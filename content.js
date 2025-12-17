@@ -5,7 +5,7 @@ function parsePrice(priceText) {
     return parseFloat(priceText.replace(/[^\d.]/g, ''));
 }
 
-// Listen for messages from the Popup
+// Listens for messages from the Popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "getProductDetails") {
         

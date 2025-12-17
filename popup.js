@@ -1,15 +1,15 @@
-// 1. Setup the "Track" button
+// 1.The "Track" button
 document.getElementById('trackBtn').addEventListener('click', async () => {
-    // Get the current active tab
+    // Gets the current active tab
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     
-    // Check if we are on Daraz
+    // Checks if we are on Daraz
     if (!tab.url.includes("daraz.com.bd")) {
         alert("Please go to a Daraz product page first.");
         return;
     }
 
-    // Ask content.js for the data
+    // Asks content.js for the data
     chrome.tabs.sendMessage(tab.id, { action: "getProductDetails" }, (response) => {
         if (response && !response.error) {
             saveProduct(response);
@@ -19,7 +19,7 @@ document.getElementById('trackBtn').addEventListener('click', async () => {
     });
 });
 
-// 2. Save to Chrome Storage
+// 2. Saves to Chrome Storage
 function saveProduct(product) {
     chrome.storage.local.get({ watchlist: [] }, (result) => {
         const watchlist = result.watchlist;
@@ -39,7 +39,6 @@ function saveProduct(product) {
 }
 
 // 3. Display the list
-// Replace your old displayList function with this one
 function displayList() {
     chrome.storage.local.get({ watchlist: [] }, (result) => {
         const listDiv = document.getElementById('list');
