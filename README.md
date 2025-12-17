@@ -48,6 +48,6 @@ Since this is a portfolio project (not on the Chrome Web Store), you must instal
 ⚠️ Disclaimer
 Educational Purpose Only. This project is created for educational and portfolio purposes to demonstrate browser automation capabilities. It is not affiliated with, endorsed by, or connected to Daraz or Alibaba Group.
 
-Users are responsible for complying with the target website's Terms of Service.
+--Users are responsible for complying with the target website's Terms of Service.
 
-The developer is not responsible for any misuse of this software.
+--The developer is not responsible for any misuse of this software.
