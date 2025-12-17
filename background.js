@@ -1,3 +1,13 @@
+/*
+ * DARAZ PRICE TRACKER
+ * -------------------
+ * DISCLAIMER: This script is for educational purposes only.
+ * It is not affiliated with Daraz.com.bd.
+ * Use responsibly and do not use for aggressive scraping.
+ */
+
+chrome.runtime.onInstalled.addListener(() => {
+    // ... rest of your code ...
 chrome.runtime.onInstalled.addListener(() => {
     chrome.alarms.create("checkPrices", { periodInMinutes: 60 });
 });
