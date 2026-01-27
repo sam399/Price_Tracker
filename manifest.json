@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "BD Price Tracker",
   "version": "1.0",
-  "description": "Track prices on Daraz BD locally.",
+  "description": "Track prices on Daraz BD, Startech, Rokomari, and Pickaboo.",
   "permissions": [
     "storage",
     "alarms",
@@ -11,7 +11,10 @@
     "notifications"
   ],
   "host_permissions": [
-    "https://www.daraz.com.bd/*"
+    "https://www.daraz.com.bd/*",
+    "https://www.startech.com.bd/*",
+    "https://www.rokomari.com/*",
+    "https://www.pickaboo.com/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -22,7 +25,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.daraz.com.bd/*"],
+      "matches": [
+        "https://www.daraz.com.bd/*",
+        "https://www.startech.com.bd/*",
+        "https://www.rokomari.com/*",
+        "https://www.pickaboo.com/*"
+      ],
       "js": ["content.js"]
     }
   ]
