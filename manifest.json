@@ -7,7 +7,8 @@
     "storage",
     "alarms",
     "scripting",
-    "activeTab"
+    "activeTab",
+    "notifications"
   ],
   "host_permissions": [
     "https://www.daraz.com.bd/*"

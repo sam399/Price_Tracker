@@ -62,29 +62,27 @@ function checkItemWithTab(item) {
                         console.log(`   💰 Found Price: ${currentPrice} | Saved: ${item.price}`);
 
                         if (currentPrice > 0 && currentPrice < item.price) {
-                    
-                    // 1. Calculate Percentage Drop
-                    const dropAmount = item.price - currentPrice;
-                    const dropPercent = Math.round((dropAmount / item.price) * 100);
+                            // 1. Calculate Percentage Drop
+                            const dropAmount = item.price - currentPrice;
+                            const dropPercent = Math.round((dropAmount / item.price) * 100);
 
-                    // 2. Check Target Logic
-                    // Notify IF: (No target set) OR (Price is below Target)
-                    const targetMet = !item.targetPrice || (item.targetPrice > 0 && currentPrice <= item.targetPrice);
+                            // 2. Check Target Logic
+                            // Notify IF: (No target set) OR (Price is below Target)
+                            const targetMet = !item.targetPrice || (item.targetPrice > 0 && currentPrice <= item.targetPrice);
 
-                    if (targetMet) {
-                        console.log(`   🔥 PRICE DROP! -${dropPercent}%`);
-                        
-                        // Update Price in Storage
-                        item.price = currentPrice;
-                        // Important: We need to write this update back to the main watchlist array
-                        // (This requires passing the whole watchlist or re-fetching it, 
-                        //  but for now let's use the helper function below)
-                        updatePriceAndNotify(item, currentPrice, dropPercent);
-                    } else {
-                        console.log(`   📉 Dropped to ${currentPrice}, but waiting for target (${item.targetPrice})`);
-                    }
-                }
-                        else {
+                            if (targetMet) {
+                                console.log(`   🔥 PRICE DROP! -${dropPercent}%`);
+                                
+                                // Update Price in Storage
+                                item.price = currentPrice;
+                                // Important: We need to write this update back to the main watchlist array
+                                // (This requires passing the whole watchlist or re-fetching it, 
+                                //  but for now let's use the helper function below)
+                                updatePriceAndNotify(item, currentPrice, dropPercent);
+                            } else {
+                                console.log(`   📉 Dropped to ${currentPrice}, but waiting for target (${item.targetPrice})`);
+                            }
+                        } else {
                             console.log("   ✅ Price Stable");
                         }
                     }
@@ -105,7 +103,7 @@ function updatePriceAndNotify(item, newPrice, dropPercent) {
             chrome.storage.local.set({ watchlist: data.watchlist });
             
             // Smart Notification
-            chrome.notifications.create({
+            chrome.notifications.create(item.url, {
                 type: 'basic',
                 iconUrl: 'icon.png',
                 title: `Price Dropped by ${dropPercent}%!`,
@@ -115,6 +113,13 @@ function updatePriceAndNotify(item, newPrice, dropPercent) {
         }
     });
 }
+
+// Handle notification clicks (placed outside to avoid duplicate listeners)
+chrome.notifications.onClicked.addListener((notificationId) => {
+    // notificationId is the product URL we passed during creation
+    chrome.tabs.create({ url: notificationId });
+    chrome.notifications.clear(notificationId);
+});
 // --- THIS FUNCTION RUNS INSIDE THE DARAZ PAGE ---
 function scrapePriceFromPage() {
     
