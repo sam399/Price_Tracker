@@ -13,10 +13,14 @@ chrome.runtime.onInstalled.addListener(() => {
     chrome.alarms.create("checkPrices", { periodInMinutes: 60 });
 });
 
-chrome.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === "checkPrices") {
-        checkAllPrices();
-    }
+//chrome.alarms.onAlarm.addListener((alarm) => {
+    //if (alarm.name === "checkPrices") {
+        //checkAllPrices();
+   // }    
+//});
+chrome.action.onClicked.addListener(() => {
+    console.log("🖱 Extension icon clicked — running price check now");
+    checkAllPrices();
 });
 
 async function checkAllPrices() {

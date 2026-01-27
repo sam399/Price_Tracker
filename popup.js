@@ -24,6 +24,8 @@ document.getElementById('trackBtn').addEventListener('click', async () => {
                 return;
             }
             // After injection, send message
+            console.log("🚀 Tracking new product:");// Init history with the starting price
+
             chrome.tabs.sendMessage(tab.id, { action: "getProductDetails" }, (response) => {
                 // Always check lastError first
                 if (chrome.runtime.lastError) {
@@ -50,11 +52,11 @@ function saveProduct(product) {
         const exists = watchlist.find(item => item.url === product.url);
         
         if (!exists) {
-            // Init history with the starting price
+            console.log("🚀 Tracking new product:", product.title);// Init history with the starting price
             product.history = [{ 
                 date: new Date().toLocaleDateString(), 
                 price: product.price 
-            }];
+            }]; 
             
             watchlist.push(product);
             chrome.storage.local.set({ watchlist }, () => {
@@ -71,7 +73,7 @@ function saveProduct(product) {
     });
 }// Sync product to server
 async function syncToServer(product) {
-    const API_URL = "http://127.0.0.1:3000/api/sync";
+    const API_URL = "https://price-tracker-bd.onrender.com/api/sync";
     try {
         const payload = {
             url: product.url,
