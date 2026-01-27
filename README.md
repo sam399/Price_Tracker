@@ -93,8 +93,23 @@ node server.js
 - MongoDB Atlas account (free tier available at [mongodb.com](https://www.mongodb.com))
 - Update `.env` with your MongoDB connection string
 
+**Environment variables (production-ready defaults):**
+
+```env
+MONGO_URI=mongodb+srv://<user>:<password>@<cluster>/price-tracker
+PORT=3000
+ALLOWED_ORIGINS=https://yourdomain.com,chrome-extension://your-extension-id  # empty = allow all
+HISTORY_TTL_DAYS=90           # auto-delete history older than this (min 7)
+HISTORY_MAX_PER_PRODUCT=120   # keep at most this many history rows per product
+```
+
+**Data retention & storage controls:**
+- One history entry per product per day (deduped by date) to avoid noisy growth.
+- TTL index removes entries older than `HISTORY_TTL_DAYS`.
+- Per-product cap deletes oldest entries beyond `HISTORY_MAX_PER_PRODUCT`.
+
 **What the server does:**
 - Receives price data from the extension via POST `/api/sync`
-- Stores products and price history in MongoDB
+- Stores products and one price history row per day in MongoDB
 - Provides GET `/api/history?url=<product_url>` for historical data
 - Enables price tracking across devices (sync MongoDB data to your account)
