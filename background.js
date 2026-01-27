@@ -190,7 +190,8 @@ async function syncPriceToServer(item, currentPrice) {
         const response = await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            keepalive: true // This tells Chrome "keep this connection open longer"
         });
 
         const result = await response.json();

@@ -23,23 +23,25 @@ document.getElementById('trackBtn').addEventListener('click', async () => {
                 alert("Error injecting script: " + chrome.runtime.lastError.message);
                 return;
             }
-            // After injection, send message
-            console.log("🚀 Tracking new product:");// Init history with the starting price
-
-            chrome.tabs.sendMessage(tab.id, { action: "getProductDetails" }, (response) => {
-                // Always check lastError first
-                if (chrome.runtime.lastError) {
-                    console.log("Message error:", chrome.runtime.lastError);
-                    alert("Error: Could not connect to page. Try refreshing the page.");
-                    return;
-                }
-                if (response && !response.error) {
-                    response.targetPrice = targetPrice;
-                    saveProduct(response);
-                } else {
-                    alert("Error: " + (response ? response.error : "Reload the page and try again."));
-                }
-            });
+            // Wait a moment for content script to initialize
+            setTimeout(() => {
+                console.log("🚀 Tracking new product:");
+                
+                chrome.tabs.sendMessage(tab.id, { action: "getProductDetails" }, (response) => {
+                    // Always check lastError first
+                    if (chrome.runtime.lastError) {
+                        console.log("Message error:", chrome.runtime.lastError);
+                        alert("Error: Could not connect to page. Try refreshing the page.");
+                        return;
+                    }
+                    if (response && !response.error) {
+                        response.targetPrice = targetPrice;
+                        saveProduct(response);
+                    } else {
+                        alert("Error: " + (response ? response.error : "Reload the page and try again."));
+                    }
+                });
+            }, 100); // 100ms delay to ensure content script is ready
         }
     );
 });

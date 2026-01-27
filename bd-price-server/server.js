@@ -25,19 +25,18 @@ app.post('/api/sync', async (req, res) => {
 
         // A. Update or Create the Product
         const product = await Product.findOneAndUpdate(
-            { url: url }, 
+            { u: url }, // Use the actual field name, not the alias
             { 
-                url, 
-                title, 
-                image, 
-                lastUpdated: new Date() 
+                u: url,
+                t: title, 
+                i: image, 
+                d: new Date() 
             },
             { upsert: true, new: true } // Create if doesn't exist
         );
 
         // B. Add to History
-        // (Optional: You can check if the price is different from the last entry before saving to save space)
-        const newHistory = new History({ productUrl: url, price: price });
+        const newHistory = new History({ pid: url, p: price });
         await newHistory.save();
 
         console.log(`💾 Saved: ৳${price} for ${title.substring(0, 15)}...`);
@@ -55,9 +54,9 @@ app.get('/api/history', async (req, res) => {
     if (!url) return res.status(400).json({ error: "Missing url parameter" });
 
     try {
-        // Get the last 30 price points for this URL
-        const history = await History.find({ productUrl: url })
-            .sort({ date: 1 }) // Oldest first (for graph)
+        // Get the last 100 price points for this URL (using actual field name 'pid')
+        const history = await History.find({ pid: url })
+            .sort({ d: 1 }) // Oldest first (for graph) - using actual field 'd'
             .limit(100);
         
         res.json(history);
