@@ -104,9 +104,14 @@ async function syncToServer(product) {
         });
 
         const result = await response.json();
-        console.log("✅ Synced to server:", result.message);
+        
+        if (response.ok) {
+            console.log("✅ Synced to server:", result.message);
+        } else {
+            console.error("⚠️ Server rejected:", result.error || result);
+        }
     } catch (err) {
-        console.log("⚠️ Server sync failed:", err);
+        console.error("⚠️ Server sync failed:", err.message);
     }
 }
 // 2. UPDATED: Display List with Chart Button
