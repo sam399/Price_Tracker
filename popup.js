@@ -15,35 +15,48 @@ document.getElementById('trackBtn').addEventListener('click', async () => {
     const targetInput = document.getElementById('targetPrice').value;
     const targetPrice = targetInput ? parseFloat(targetInput) : 0; // 0 means "notify on any drop"
 
-    // Inject content script first, then send message
-    chrome.scripting.executeScript(
-        { target: { tabId: tab.id }, files: ["content.js"] },
-        () => {
-            if (chrome.runtime.lastError) {
-                alert("Error injecting script: " + chrome.runtime.lastError.message);
-                return;
-            }
-            // Wait a moment for content script to initialize
-            setTimeout(() => {
-                console.log("🚀 Tracking new product:");
-                
-                chrome.tabs.sendMessage(tab.id, { action: "getProductDetails" }, (response) => {
-                    // Always check lastError first
-                    if (chrome.runtime.lastError) {
-                        console.log("Message error:", chrome.runtime.lastError);
-                        alert("Error: Could not connect to page. Try refreshing the page.");
+    // Try sending message first (content script might already be loaded)
+    chrome.tabs.sendMessage(tab.id, { action: "getProductDetails" }, (response) => {
+        // Must check lastError synchronously to consume it
+        const error = chrome.runtime.lastError;
+        
+        if (error) {
+            // Content script not loaded, inject it
+            console.log("Content script not found, injecting...");
+            chrome.scripting.executeScript(
+                { target: { tabId: tab.id }, files: ["content.js"] },
+                () => {
+                    const injectError = chrome.runtime.lastError;
+                    if (injectError) {
+                        alert("Error injecting script: " + injectError.message);
                         return;
                     }
-                    if (response && !response.error) {
-                        response.targetPrice = targetPrice;
-                        saveProduct(response);
-                    } else {
-                        alert("Error: " + (response ? response.error : "Reload the page and try again."));
-                    }
-                });
-            }, 100); // 100ms delay to ensure content script is ready
+                    // Wait and try again after injection
+                    setTimeout(() => {
+                        chrome.tabs.sendMessage(tab.id, { action: "getProductDetails" }, (response) => {
+                            const retryError = chrome.runtime.lastError;
+                            if (retryError) {
+                                console.log("Message error:", retryError.message);
+                                return;
+                            }
+                            if (response && !response.error) {
+                                response.targetPrice = targetPrice;
+                                saveProduct(response);
+                            } else {
+                                alert("Error: " + (response ? response.error : "Reload the page and try again."));
+                            }
+                        });
+                    }, 100);
+                }
+            );
+        } else if (response && !response.error) {
+            // Content script already loaded, process response
+            response.targetPrice = targetPrice;
+            saveProduct(response);
+        } else {
+            alert("Error: " + (response ? response.error : "Reload the page and try again."));
         }
-    );
+    });
 });
 
 // 2. Save to Storage
