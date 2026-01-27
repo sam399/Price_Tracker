@@ -67,7 +67,10 @@ function saveProduct(product) {
         const exists = watchlist.find(item => item.url === product.url);
         
         if (!exists) {
-            console.log("🚀 Tracking new product:", product.title);// Init history with the starting price
+            console.log("🚀 Tracking new product:", product.title);
+            console.log("   Product object:", product);
+            
+            // Init history with the starting price
             product.history = [{ 
                 date: new Date().toLocaleDateString(), 
                 price: product.price 
@@ -88,7 +91,9 @@ function saveProduct(product) {
     });
 }// Sync product to server
 async function syncToServer(product) {
-    const API_URL = "https://price-tracker-bd.onrender.com/api/sync";
+    // Production URL (switch to local for debugging)
+    const API_URL = "https://price-tracker-bd.onrender.com/api/sync"; 
+    // const API_URL = "http://127.0.0.1:3000/api/sync";
     try {
         const payload = {
             url: product.url,
@@ -96,7 +101,8 @@ async function syncToServer(product) {
             price: product.price,
             image: "https://via.placeholder.com/150"
         };
-
+        
+        console.log("📦 Sending payload to server:", payload);
         const response = await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -117,6 +123,7 @@ async function syncToServer(product) {
         console.error("⚠️ Server sync failed:", err.message);
     }
 }
+
 // 2. UPDATED: Display List with Chart Button
 function displayList() {
     chrome.storage.local.get({ watchlist: [] }, (result) => {
