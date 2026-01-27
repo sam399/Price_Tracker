@@ -15,23 +15,28 @@ Built with **Manifest V3** and vanilla JavaScript.
 
 ## 🚀 Key Features
 
-* **One-Click Tracking:** Instantly add any supported product to your watchlist from Daraz, Startech, Rokomari, or Pickaboo.
-* **Target Price Alerts:** Set a target price for each product and get notified when the price drops below your threshold (or any drop).
-* **Smart Background Checks:** Automatically checks prices every 60 minutes in the background.
+* **Multi-Site Support:** Track products from Daraz.com.bd, Startech.com.bd, Rokomari.com, and Pickaboo.com.
+* **One-Click Tracking:** Instantly add any supported product to your watchlist with a single click.
+* **Target Price Alerts:** Set a custom target price for each product and get notified only when the price drops below your threshold (or track any drop).
+* **Smart Background Checks:** Automatically checks prices every 60 minutes in the background without user intervention.
 * **Anti-Bot Bypass:** Uses a "Hidden Tab" worker to scrape data reliably, bypassing anti-bot/CAPTCHA protection without external proxies.
-* **Export to CSV:** Download your entire watchlist as a CSV file for backup or analysis.
-* **Privacy First:** 100% Client-side. No external servers or databases. All data is stored in the user's browser (`chrome.storage.local`).
-* **Simple UI:** Manage, delete, and view your tracked products easily from the popup.
-* **Price Drop Alerts:** System notifications trigger immediately when a discount or your target price is detected.
+* **Export to CSV:** Download your entire watchlist as a CSV file for backup, sharing, or analysis.
+* **Privacy First:** 100% Client-side. No external servers or databases. All data is stored locally in your browser (`chrome.storage.local`).
+* **Simple UI:** Clean popup interface to manage, delete, and view your tracked products with current prices and target prices.
+* **Clickable Notifications:** System notifications trigger immediately when a discount or your target price is detected—click to open the product page.
+* **5-Second Intervals:** Smart throttling between checks to prevent browser freezing and respect server resources.
 
 ## 🛠️ Technical Architecture
 
+This project solves the challenge of scraping dynamic Single Page Applications (SPAs) that employ anti-bot measures, while providing a user-friendly interface for price tracking.
 
-This project solves the challenge of scraping dynamic Single Page Applications (SPAs) that employ anti-bot measures.
-
-* **Manifest V3:** Uses modern service workers instead of background pages.
-* **DOM Scraping:** Extracts price data from the DOM (selectors may need updates if sites change their layout).
-* **Tab-Based Worker:** Instead of standard `fetch()` requests (which are often blocked by CORS or Bot detection), the extension creates a temporary background tab, injects a content script to read the DOM, and closes the tab—mimicking real user behavior.
+* **Manifest V3:** Uses modern service workers instead of deprecated background pages for better performance and security.
+* **Dual Scraping Strategy:** First attempts to extract price data from SEO-embedded JSON-LD (`application/ld+json`), then falls back to DOM selectors for reliability.
+* **Tab-Based Worker:** Instead of standard `fetch()` requests (which are often blocked by CORS or bot detection), the extension creates a temporary background tab, injects a content script to read the DOM, and closes the tab—mimicking real user behavior.
+* **Chrome Storage API:** Uses `chrome.storage.local` to persist watchlist data across browser sessions without requiring external databases.
+* **Chrome Notifications API:** Delivers native system notifications with clickable links to product pages when price drops are detected.
+* **Alarm API:** Leverages `chrome.alarms` for efficient periodic price checks that don't drain system resources.
+* **Smart Throttling:** 5-second delays between item checks prevent overwhelming the browser and respect target website server limits.
 
 ## 📦 Installation
 
@@ -48,11 +53,11 @@ Since this is a portfolio project (not on the Chrome Web Store), you must instal
 
 ```text
 
-├── manifest.json      # Extension configuration (Permissions: storage, alarms, scripting, activeTab)
-├── background.js      # Service worker (Handles alarms & hidden tab logic)
+├── manifest.json      # Extension configuration (Permissions: storage, alarms, scripting, activeTab, notifications)
+├── background.js      # Service worker (Handles alarms, hidden tab logic, notifications)
 ├── content.js         # Content script (Scrapes data from the active tab)
 ├── popup.html         # Extension UI structure
-├── popup.js           # UI logic (Saving/Deleting items, export, target price)
+├── popup.js           # UI logic (Saving/Deleting items, CSV export, target price)
 ├── popup.css          # Styling (Daraz color theme)
 └── icon.png           # App Icon
 

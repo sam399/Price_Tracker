@@ -98,22 +98,42 @@ function updatePriceAndNotify(item, newPrice, dropPercent) {
     chrome.storage.local.get({ watchlist: [] }, (data) => {
         const index = data.watchlist.findIndex(i => i.url === item.url);
         if (index !== -1) {
-            // Update storage
-            data.watchlist[index].price = newPrice;
+            const product = data.watchlist[index];
+            
+            // 1. Update Current Price
+            product.price = newPrice;
+
+            // 2. Initialize History if it doesn't exist (for old items)
+            if (!product.history) product.history = [];
+
+            // 3. Add Entry to History (Date + Price)
+            const today = new Date().toLocaleDateString();
+            
+            // Prevent duplicate entries for the same day
+            const lastEntry = product.history[product.history.length - 1];
+            if (!lastEntry || lastEntry.date !== today) {
+                product.history.push({ date: today, price: newPrice });
+            } else {
+                // If we already have an entry for today, update the price to the latest one
+                lastEntry.price = newPrice;
+            }
+
+            // 4. Save & Notify
+            data.watchlist[index] = product;
             chrome.storage.local.set({ watchlist: data.watchlist });
             
-            // Smart Notification
-            chrome.notifications.create(item.url, {
-                type: 'basic',
-                iconUrl: 'icon.png',
-                title: `Price Dropped by ${dropPercent}%!`,
-                message: `Now ৳${newPrice} (was ৳${item.price + (item.price - newPrice)}). Click to buy!`,
-                priority: 2
-            });
+            if (dropPercent > 0) {
+                 chrome.notifications.create(item.url, {
+                    type: 'basic',
+                    iconUrl: 'icon.png',
+                    title: `Price Dropped by ${dropPercent}%!`,
+                    message: `Now ৳${newPrice}. Click to buy!`,
+                    priority: 2
+                });
+            }
         }
     });
 }
-
 // Handle notification clicks (placed outside to avoid duplicate listeners)
 chrome.notifications.onClicked.addListener((notificationId) => {
     // notificationId is the product URL we passed during creation
