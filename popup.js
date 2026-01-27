@@ -108,7 +108,10 @@ async function syncToServer(product) {
         if (response.ok) {
             console.log("✅ Synced to server:", result.message);
         } else {
-            console.error("⚠️ Server rejected:", result.error || result);
+            console.error("⚠️ Server rejected:", result);
+            if (result.details) {
+                console.error("   Error details:", result.details);
+            }
         }
     } catch (err) {
         console.error("⚠️ Server sync failed:", err.message);
