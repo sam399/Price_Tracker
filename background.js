@@ -7,8 +7,6 @@
  */
 
 chrome.runtime.onInstalled.addListener(() => {
-
-chrome.runtime.onInstalled.addListener(() => {
     chrome.alarms.create("checkPrices", { periodInMinutes: 60 });
 });
 
@@ -56,7 +54,7 @@ function checkItemWithTab(item) {
                     // 4. Closes the tab immediately
                     chrome.tabs.remove(tab.id);
 
-                    // 5. Handles the result
+                // 5. Handles the result
                     if (chrome.runtime.lastError || !results || !results[0]) {
                         console.log("   ❌ Failed to scrape tab.");
                     } else {
@@ -64,37 +62,59 @@ function checkItemWithTab(item) {
                         console.log(`   💰 Found Price: ${currentPrice} | Saved: ${item.price}`);
 
                         if (currentPrice > 0 && currentPrice < item.price) {
-                            console.log("   🔥 PRICE DROP!");
-                            updatePriceAndNotify(item, currentPrice);
-                        } else {
+                    
+                    // 1. Calculate Percentage Drop
+                    const dropAmount = item.price - currentPrice;
+                    const dropPercent = Math.round((dropAmount / item.price) * 100);
+
+                    // 2. Check Target Logic
+                    // Notify IF: (No target set) OR (Price is below Target)
+                    const targetMet = !item.targetPrice || (item.targetPrice > 0 && currentPrice <= item.targetPrice);
+
+                    if (targetMet) {
+                        console.log(`   🔥 PRICE DROP! -${dropPercent}%`);
+                        
+                        // Update Price in Storage
+                        item.price = currentPrice;
+                        // Important: We need to write this update back to the main watchlist array
+                        // (This requires passing the whole watchlist or re-fetching it, 
+                        //  but for now let's use the helper function below)
+                        updatePriceAndNotify(item, currentPrice, dropPercent);
+                    } else {
+                        console.log(`   📉 Dropped to ${currentPrice}, but waiting for target (${item.targetPrice})`);
+                    }
+                }
+                        else {
                             console.log("   ✅ Price Stable");
                         }
                     }
                     resolve(); // Done with this item
-                });
+                }); // end of chrome.scripting.executeScript callback
             }, 5000); // 5 second load time
-        });
-    });
+        }); // end of chrome.tabs.create callback
+    }); // end of Promise
 }
 
 // Helper to update storage and notify
-function updatePriceAndNotify(item, newPrice) {
+function updatePriceAndNotify(item, newPrice, dropPercent) {
     chrome.storage.local.get({ watchlist: [] }, (data) => {
         const index = data.watchlist.findIndex(i => i.url === item.url);
         if (index !== -1) {
+            // Update storage
             data.watchlist[index].price = newPrice;
             chrome.storage.local.set({ watchlist: data.watchlist });
             
+            // Smart Notification
             chrome.notifications.create({
                 type: 'basic',
                 iconUrl: 'icon.png',
-                title: 'Price Drop!',
-                message: `Price dropped to ৳${newPrice}!`
+                title: `Price Dropped by ${dropPercent}%!`,
+                message: `Now ৳${newPrice} (was ৳${item.price + (item.price - newPrice)}). Click to buy!`,
+                priority: 2
             });
         }
     });
 }
-
 // --- THIS FUNCTION RUNS INSIDE THE DARAZ PAGE ---
 function scrapePriceFromPage() {
     

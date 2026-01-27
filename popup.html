@@ -9,11 +9,23 @@
     </header>
     
     <div id="status">Go to a product page to track it.</div>
+    
+    <div style="padding: 0 15px;">
+        <input type="number" id="targetPrice" placeholder="Target Price (Optional)" 
+               style="width: 100%; padding: 8px; margin-top: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+    </div>
+
     <button id="trackBtn">+ Track This Product</button>
     
     <h4>Your Watchlist</h4>
     <div id="list">
         </div>
+
+    <div style="text-align: center; padding-bottom: 10px;">
+        <button id="exportBtn" style="background-color: #333; font-size: 12px; padding: 8px;">
+            📥 Export to CSV
+        </button>
+    </div>
 
     <script src="popup.js"></script>
 </body>
