@@ -7,7 +7,7 @@
  */
 
 // CONFIG: Server URL for syncing prices
-const API_URL = "http://127.0.0.1:3000/api/sync";
+const API_URL = "https://price-tracker-bd.onrender.com/api/sync";
 
 chrome.runtime.onInstalled.addListener(() => {
     chrome.alarms.create("checkPrices", { periodInMinutes: 60 });
