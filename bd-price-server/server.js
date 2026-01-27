@@ -8,6 +8,9 @@ const { Product, History } = require('./model');
 const app = express();
 app.use(express.json());
 app.use(cors()); // Allows your extension to talk to this server
+app.get('/', (req, res) => {
+    res.send('Server is running! 🚀');
+});
 
 // 1. CONNECT TO MONGODB
 mongoose.connect(process.env.MONGO_URI)
