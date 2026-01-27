@@ -6,6 +6,9 @@
  * Use responsibly and do not use for aggressive scraping.
  */
 
+// CONFIG: Server URL for syncing prices
+const API_URL = "http://127.0.0.1:3000/api/sync";
+
 chrome.runtime.onInstalled.addListener(() => {
     chrome.alarms.create("checkPrices", { periodInMinutes: 60 });
 });
@@ -60,6 +63,14 @@ function checkItemWithTab(item) {
                     } else {
                         const currentPrice = results[0].result;
                         console.log(`   💰 Found Price: ${currentPrice} | Saved: ${item.price}`);
+                        // ... inside the success block ...
+
+                        console.log(`   💰 Found Price: ${currentPrice}`);
+
+// NEW: Send data to your Node.js server
+
+                        syncPriceToServer(item, currentPrice);
+
 
                         if (currentPrice > 0 && currentPrice < item.price) {
                             // 1. Calculate Percentage Drop
@@ -142,7 +153,6 @@ chrome.notifications.onClicked.addListener((notificationId) => {
 });
 // --- THIS FUNCTION RUNS INSIDE THE DARAZ PAGE ---
 function scrapePriceFromPage() {
-    
     try {
         const jsonEl = document.querySelector('script[type="application/ld+json"]');
         if (jsonEl) {
@@ -152,13 +162,41 @@ function scrapePriceFromPage() {
         }
     } catch (e) {}
 
-    
-        const priceEl = document.querySelector('.pdp-price_type_normal') || 
-                        document.querySelector('.pdp-price') ||
-                        document.querySelector('[data-spm-anchor-id] span'); // Generic fallback
-                        
-        if (priceEl) {
-            return parseFloat(priceEl.innerText.replace(/[^\d.]/g, ''));
-        }
-        return 0; // Failed to find price
+    const priceEl = document.querySelector('.pdp-price_type_normal') || 
+                    document.querySelector('.pdp-price') ||
+                    document.querySelector('[data-spm-anchor-id] span'); // Generic fallback
+                    
+    if (priceEl) {
+        return parseFloat(priceEl.innerText.replace(/[^\d.]/g, ''));
     }
+    return 0; // Failed to find price
+}
+// --- CLOUD SYNC FUNCTION ---
+async function syncPriceToServer(item, currentPrice) {
+    try {
+        console.log(`☁️ Syncing to server: ${item.title.substring(0, 15)}...`);
+        
+        const payload = {
+            url: item.url,
+            title: item.title,
+            price: currentPrice,
+            image: "https://via.placeholder.com/150"
+        };
+
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            console.log("   ✅ Server confirmed:", result.message);
+        } else {
+            console.log("   ⚠️ Server rejected:", result.error);
+        }
+
+    } catch (err) {
+        console.log("   ❌ Sync Failed (Is server running?):", err);
+    }
+}

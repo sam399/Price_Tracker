@@ -15,15 +15,31 @@ document.getElementById('trackBtn').addEventListener('click', async () => {
     const targetInput = document.getElementById('targetPrice').value;
     const targetPrice = targetInput ? parseFloat(targetInput) : 0; // 0 means "notify on any drop"
 
-    chrome.tabs.sendMessage(tab.id, { action: "getProductDetails" }, (response) => {
-        if (response && !response.error) {
-            // Add target price to the product object
-            response.targetPrice = targetPrice;
-            saveProduct(response);
-        } else {
-            alert("Error: " + (response ? response.error : "Reload the page and try again."));
+    // Inject content script first, then send message
+    chrome.scripting.executeScript(
+        { target: { tabId: tab.id }, files: ["content.js"] },
+        () => {
+            if (chrome.runtime.lastError) {
+                alert("Error injecting script: " + chrome.runtime.lastError.message);
+                return;
+            }
+            // After injection, send message
+            chrome.tabs.sendMessage(tab.id, { action: "getProductDetails" }, (response) => {
+                // Always check lastError first
+                if (chrome.runtime.lastError) {
+                    console.log("Message error:", chrome.runtime.lastError);
+                    alert("Error: Could not connect to page. Try refreshing the page.");
+                    return;
+                }
+                if (response && !response.error) {
+                    response.targetPrice = targetPrice;
+                    saveProduct(response);
+                } else {
+                    alert("Error: " + (response ? response.error : "Reload the page and try again."));
+                }
+            });
         }
-    });
+    );
 });
 
 // 2. Save to Storage
@@ -43,14 +59,39 @@ function saveProduct(product) {
             watchlist.push(product);
             chrome.storage.local.set({ watchlist }, () => {
                 displayList();
+                
+                // Send to server when product is tracked
+                syncToServer(product);
+                
                 alert("Tracking started!");
             });
         } else {
             alert("Already tracking.");
         }
     });
-}
+}// Sync product to server
+async function syncToServer(product) {
+    const API_URL = "http://127.0.0.1:3000/api/sync";
+    try {
+        const payload = {
+            url: product.url,
+            title: product.title,
+            price: product.price,
+            image: "https://via.placeholder.com/150"
+        };
 
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        console.log("✅ Synced to server:", result.message);
+    } catch (err) {
+        console.log("⚠️ Server sync failed:", err);
+    }
+}
 // 2. UPDATED: Display List with Chart Button
 function displayList() {
     chrome.storage.local.get({ watchlist: [] }, (result) => {
