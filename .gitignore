@@ -1,5 +1,18 @@
-node_modules/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
 .env
-bd-price-server/.env
-*.log
+venv/
+env/
+.venv/
+
+# OS / Editor
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Binaries
+*.zip

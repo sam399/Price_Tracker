@@ -1,36 +1,40 @@
 {
   "manifest_version": 3,
   "name": "BD Price Tracker",
-  "version": "1.0",
-  "description": "Track prices on Daraz BD, Startech, Rokomari, and Pickaboo.",
+  "version": "1.0.1",
+  "description": "Track product prices on Daraz BD and get alerts when prices drop.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "BD Price Tracker"
+  },
   "permissions": [
     "storage",
     "alarms",
-    "scripting",
+    "notifications",
     "activeTab",
-    "notifications"
+    "scripting"
   ],
   "host_permissions": [
-    "https://www.daraz.com.bd/*",
-    "https://www.startech.com.bd/*",
-    "https://www.rokomari.com/*",
-    "https://www.pickaboo.com/*"
+    "*://*.daraz.com.bd/*"
   ],
-  "action": {
-    "default_popup": "popup.html",
-    "default_icon": "icon.png" 
-  },
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://www.daraz.com.bd/*",
-        "https://www.startech.com.bd/*",
-        "https://www.rokomari.com/*",
-        "https://www.pickaboo.com/*"
-      ],
+      "matches": ["*://*.daraz.com.bd/*"],
       "js": ["content.js"]
     }
   ]

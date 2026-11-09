@@ -1,33 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8"> 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BD Price Tracker</title>
     <link rel="stylesheet" href="popup.css">
-    <script src="chart.js"></script>
 </head>
 <body>
-    <header>
-        Daraz Price Tracker 🇧🇩
-    </header>
-    
-    <div id="status">Go to a product page to track it.</div>
-    
-    <div style="padding: 0 15px;">
-        <input type="number" id="targetPrice" placeholder="Target Price (Optional)" 
-               style="width: 100%; padding: 8px; margin-top: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
-    </div>
-
-    <button id="trackBtn">+ Track This Product</button>
-    
-    <h4>Your Watchlist</h4>
-    <div id="list">
+    <header class="app-header">
+        <div class="logo-area">
+            <img src="icons/icon32.png" alt="Logo" class="app-logo">
+            <span class="app-title">Daraz BD Price Tracker</span>
         </div>
+        <div class="header-actions">
+            <button id="refreshBtn" class="icon-btn" title="Refresh all prices now">🔄</button>
+            <button id="settingsBtn" class="icon-btn" title="Cloud & Telegram Settings">⚙️</button>
+        </div>
+    </header>
 
-    <div style="text-align: center; padding-bottom: 10px;">
-        <button id="exportBtn" style="background-color: #333; font-size: 12px; padding: 8px;">
-            📥 Export to CSV
-        </button>
+    <!-- Cloud Settings Drawer -->
+    <div id="settingsDrawer" class="settings-drawer hidden">
+        <h5>Cloud & Telegram 24/7 Alerts</h5>
+        <p class="settings-hint">Track even when your PC is turned off.</p>
+        <label class="settings-label">Cloud Backend API URL:</label>
+        <input type="text" id="backendUrlInput" placeholder="https://your-api.onrender.com" class="settings-input">
+        <label class="settings-label">Telegram Chat ID (Optional):</label>
+        <input type="text" id="telegramChatIdInput" placeholder="e.g. 123456789" class="settings-input">
+        <button id="saveSettingsBtn" class="secondary-btn">Save Settings</button>
     </div>
+
+    <div class="action-card">
+        <p id="pageStatus" class="page-status">Checking current page...</p>
+        <button id="trackBtn" class="primary-btn" disabled>+ Track This Product</button>
+    </div>
+
+    <section class="watchlist-section">
+        <div class="section-header">
+            <h4>Your Watchlist</h4>
+            <span id="itemCount" class="badge">0</span>
+        </div>
+        <div id="list" class="item-list"></div>
+    </section>
+
+    <div id="toast" class="toast hidden"></div>
 
     <script src="popup.js"></script>
 </body>

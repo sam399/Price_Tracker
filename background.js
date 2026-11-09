@@ -1,207 +1,184 @@
-/*
- * DARAZ PRICE TRACKER
- * -------------------
- * DISCLAIMER: This script is for educational purposes only.
- * It is not affiliated with Daraz.com.bd.
- * Use responsibly and do not use for aggressive scraping.
- */
+// BD Price Tracker - Background Service Worker
 
-// CONFIG: Server URL for syncing prices
-const API_URL = "https://price-tracker-bd.onrender.com/api/sync";
-
+// 1. Setup periodic alarm on install/update
 chrome.runtime.onInstalled.addListener(() => {
     chrome.alarms.create("checkPrices", { periodInMinutes: 60 });
+    console.log("BD Price Tracker initialized. Check alarm scheduled every 60m.");
 });
 
-//chrome.alarms.onAlarm.addListener((alarm) => {
-    //if (alarm.name === "checkPrices") {
-        //checkAllPrices();
-   // }    
-//});
-chrome.action.onClicked.addListener(() => {
-    console.log("🖱 Extension icon clicked — running price check now");
-    checkAllPrices();
+// 2. Listen for alarm triggers
+chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === "checkPrices") {
+        checkAllPrices();
+    }
 });
 
+// 3. Listen for manual check requests from popup
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "refreshAllPrices") {
+        checkAllPrices().then((summary) => {
+            sendResponse({ success: true, summary });
+        }).catch((err) => {
+            sendResponse({ success: false, error: err.message });
+        });
+        return true; // Keep message channel open for async response
+    }
+});
+
+// 4. Main price check runner (Runs silently via fetch, NO tabs opened!)
 async function checkAllPrices() {
-    console.log("🚀 Starting Tab-Based Price Check...");
-    
-    const result = await chrome.storage.local.get({ watchlist: [] });
-    const watchlist = result.watchlist;
+    console.log("🚀 Starting silent price check...");
+    const { watchlist = [] } = await chrome.storage.local.get({ watchlist: [] });
 
     if (watchlist.length === 0) {
-        console.log("⚠️ Watchlist is empty.");
-        return;
+        console.log("Watchlist is empty.");
+        return { total: 0, drops: 0 };
     }
 
-    // Check items one by one
-    for (const item of watchlist) {
-        await checkItemWithTab(item);
-        // Waits 5 seconds between checks so your browser doesn't freeze
-        await new Promise(r => setTimeout(r, 5000));
+    let dropsCount = 0;
+    let hasUpdates = false;
+
+    for (let i = 0; i < watchlist.length; i++) {
+        const item = watchlist[i];
+        if (!item.url) continue;
+
+        try {
+            const latestData = await fetchProductData(item.url);
+            if (latestData && latestData.price > 0) {
+                const oldPrice = item.price;
+                const newPrice = latestData.price;
+
+                // Ensure price history exists
+                if (!Array.isArray(item.history)) {
+                    item.history = [{ price: oldPrice, date: item.dateAdded || new Date().toISOString() }];
+                }
+
+                // If image was missing, save it now
+                if (!item.image && latestData.image) {
+                    item.image = latestData.image;
+                    hasUpdates = true;
+                }
+
+                // Detect price drop
+                if (newPrice < oldPrice) {
+                    dropsCount++;
+                    const diff = oldPrice - newPrice;
+                    const percent = Math.round((diff / oldPrice) * 100);
+
+                    triggerPriceDropNotification(item, oldPrice, newPrice, percent);
+                    item.lowestPrice = Math.min(item.lowestPrice || oldPrice, newPrice);
+                }
+
+                // Record new price if changed
+                if (newPrice !== oldPrice) {
+                    item.price = newPrice;
+                    item.history.push({ price: newPrice, date: new Date().toISOString() });
+                    hasUpdates = true;
+                }
+
+                item.lastChecked = new Date().toISOString();
+                item.status = "active";
+            }
+        } catch (err) {
+            console.error(`Failed to check item ${item.title}:`, err);
+            item.status = "error";
+        }
+
+        // Polite delay between background requests to avoid rate limits
+        await new Promise((resolve) => setTimeout(resolve, 1500));
     }
+
+    if (hasUpdates) {
+        await chrome.storage.local.set({ watchlist });
+    }
+
+    console.log(`✅ Price check completed. Checked: ${watchlist.length}, Drops: ${dropsCount}`);
+    return { total: watchlist.length, drops: dropsCount };
 }
 
-function checkItemWithTab(item) {
-    return new Promise((resolve) => {
-        console.log(`🔎 Opening tab for: ${item.title.substring(0, 15)}...`);
-
-        // 1. Creates a tab (active: false means it opens in background)
-        chrome.tabs.create({ url: item.url, active: false }, (tab) => {
-            
-            // 2. Waits 5 seconds for Daraz to load completely
-            setTimeout(() => {
-                
-                // 3. Injects a script into that tab to read the price
-                chrome.scripting.executeScript({
-                    target: { tabId: tab.id },
-                    func: scrapePriceFromPage, // The function below runs inside the tab
-                }, (results) => {
-                    
-                    // 4. Closes the tab immediately
-                    chrome.tabs.remove(tab.id);
-
-                // 5. Handles the result
-                    if (chrome.runtime.lastError || !results || !results[0]) {
-                        console.log("   ❌ Failed to scrape tab.");
-                    } else {
-                        const currentPrice = results[0].result;
-                        console.log(`   💰 Found Price: ${currentPrice} | Saved: ${item.price}`);
-                        // ... inside the success block ...
-
-                        console.log(`   💰 Found Price: ${currentPrice}`);
-
-// NEW: Send data to your Node.js server
-
-                        syncPriceToServer(item, currentPrice);
-
-
-                        if (currentPrice > 0 && currentPrice < item.price) {
-                            // 1. Calculate Percentage Drop
-                            const dropAmount = item.price - currentPrice;
-                            const dropPercent = Math.round((dropAmount / item.price) * 100);
-
-                            // 2. Check Target Logic
-                            // Notify IF: (No target set) OR (Price is below Target)
-                            const targetMet = !item.targetPrice || (item.targetPrice > 0 && currentPrice <= item.targetPrice);
-
-                            if (targetMet) {
-                                console.log(`   🔥 PRICE DROP! -${dropPercent}%`);
-                                
-                                // Update Price in Storage
-                                item.price = currentPrice;
-                                // Important: We need to write this update back to the main watchlist array
-                                // (This requires passing the whole watchlist or re-fetching it, 
-                                //  but for now let's use the helper function below)
-                                updatePriceAndNotify(item, currentPrice, dropPercent);
-                            } else {
-                                console.log(`   📉 Dropped to ${currentPrice}, but waiting for target (${item.targetPrice})`);
-                            }
-                        } else {
-                            console.log("   ✅ Price Stable");
-                        }
-                    }
-                    resolve(); // Done with this item
-                }); // end of chrome.scripting.executeScript callback
-            }, 5000); // 5 second load time
-        }); // end of chrome.tabs.create callback
-    }); // end of Promise
-}
-
-// Helper to update storage and notify
-function updatePriceAndNotify(item, newPrice, dropPercent) {
-    chrome.storage.local.get({ watchlist: [] }, (data) => {
-        const index = data.watchlist.findIndex(i => i.url === item.url);
-        if (index !== -1) {
-            const product = data.watchlist[index];
-            
-            // 1. Update Current Price
-            product.price = newPrice;
-
-            // 2. Initialize History if it doesn't exist (for old items)
-            if (!product.history) product.history = [];
-
-            // 3. Add Entry to History (Date + Price)
-            const today = new Date().toLocaleDateString();
-            
-            // Prevent duplicate entries for the same day
-            const lastEntry = product.history[product.history.length - 1];
-            if (!lastEntry || lastEntry.date !== today) {
-                product.history.push({ date: today, price: newPrice });
-            } else {
-                // If we already have an entry for today, update the price to the latest one
-                lastEntry.price = newPrice;
-            }
-
-            // 4. Save & Notify
-            data.watchlist[index] = product;
-            chrome.storage.local.set({ watchlist: data.watchlist });
-            
-            if (dropPercent > 0) {
-                 chrome.notifications.create(item.url, {
-                    type: 'basic',
-                    iconUrl: 'icon.png',
-                    title: `Price Dropped by ${dropPercent}%!`,
-                    message: `Now ৳${newPrice}. Click to buy!`,
-                    priority: 2
-                });
-            }
+// 5. Silent background fetch & HTML extraction (No CORS issues in MV3 Service Worker with host_permissions)
+async function fetchProductData(url) {
+    const response = await fetch(url, {
+        headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
         }
     });
-}
-// Handle notification clicks (placed outside to avoid duplicate listeners)
-chrome.notifications.onClicked.addListener((notificationId) => {
-    // notificationId is the product URL we passed during creation
-    chrome.tabs.create({ url: notificationId });
-    chrome.notifications.clear(notificationId);
-});
-// --- THIS FUNCTION RUNS INSIDE THE DARAZ PAGE ---
-function scrapePriceFromPage() {
-    try {
-        const jsonEl = document.querySelector('script[type="application/ld+json"]');
-        if (jsonEl) {
-            const data = JSON.parse(jsonEl.innerText);
-            if (data.offers && data.offers.price) return parseFloat(data.offers.price);
-            if (data.offers && data.offers.lowPrice) return parseFloat(data.offers.lowPrice);
-        }
-    } catch (e) {}
 
-    const priceEl = document.querySelector('.pdp-price_type_normal') || 
-                    document.querySelector('.pdp-price') ||
-                    document.querySelector('[data-spm-anchor-id] span'); // Generic fallback
-                    
-    if (priceEl) {
-        return parseFloat(priceEl.innerText.replace(/[^\d.]/g, ''));
+    if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
     }
-    return 0; // Failed to find price
+
+    const html = await response.text();
+    return parseDarazHtml(html);
 }
-// --- CLOUD SYNC FUNCTION ---
-async function syncPriceToServer(item, currentPrice) {
+
+// 6. Resilient HTML parser: uses embedded pdpTrackingData or JSON-LD
+function parseDarazHtml(html) {
+    // Strategy 1: pdpTrackingData (Server-rendered JSON in Daraz HTML)
     try {
-        console.log(`☁️ Syncing to server: ${item.title.substring(0, 15)}...`);
-        
-        const payload = {
-            url: item.url,
-            title: item.title,
-            price: currentPrice,
-            image: "https://via.placeholder.com/150"
+        const pdpMatch = html.match(/var\s+pdpTrackingData\s*=\s*"([\s\S]*?)";/);
+        if (pdpMatch) {
+            const rawJson = pdpMatch[1].replace(/\\"/g, '"').replace(/\\\//g, '/');
+            const data = JSON.parse(rawJson);
+            const priceStr = data.pdt_price || "";
+            const price = parseFloat(priceStr.replace(/[^\d.]/g, ""));
+
+            if (price > 0) {
+                return {
+                    title: data.pdt_name || "",
+                    price: price,
+                    image: data.pdt_photo || ""
+                };
+            }
+        }
+    } catch (e) {
+        console.warn("pdpTrackingData parse error:", e);
+    }
+
+    // Strategy 2: application/ld+json (Schema.org metadata)
+    try {
+        const scripts = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi)];
+        for (const match of scripts) {
+            const parsed = JSON.parse(match[1]);
+            if (parsed["@type"] === "Product" && parsed.offers) {
+                const offerPrice = parseFloat(parsed.offers.price || parsed.offers.lowPrice || 0);
+                const image = Array.isArray(parsed.image) ? parsed.image[0] : (parsed.image || "");
+                if (offerPrice > 0) {
+                    return {
+                        title: parsed.name || "",
+                        price: offerPrice,
+                        image: image
+                    };
+                }
+            }
+        }
+    } catch (e) {
+        console.warn("ld+json parse error:", e);
+    }
+
+    // Strategy 3: Regex fallbacks for Open Graph & visual tags
+    const priceMatch = html.match(/"pdt_price":\s*"৳?\s*([0-9,.]+)"/);
+    if (priceMatch) {
+        const price = parseFloat(priceMatch[1].replace(/,/g, ""));
+        const ogImageMatch = html.match(/<meta property="og:image" content="([^"]+)"/i);
+        const ogTitleMatch = html.match(/<meta property="og:title" content="([^"]+)"/i);
+        return {
+            title: ogTitleMatch ? ogTitleMatch[1] : "",
+            price: price,
+            image: ogImageMatch ? ogImageMatch[1] : ""
         };
-
-        const response = await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-            keepalive: true // This tells Chrome "keep this connection open longer"
-        });
-
-        const result = await response.json();
-        if (result.success) {
-            console.log("   ✅ Server confirmed:", result.message);
-        } else {
-            console.log("   ⚠️ Server rejected:", result.error);
-        }
-
-    } catch (err) {
-        console.log("   ❌ Sync Failed (Is server running?):", err);
     }
+
+    return null;
+}
+
+// 7. Desktop notification helper
+function triggerPriceDropNotification(item, oldPrice, newPrice, percent) {
+    chrome.notifications.create({
+        type: "basic",
+        iconUrl: "icons/icon128.png",
+        title: `🔥 Price Drop: ৳${oldPrice} ➔ ৳${newPrice} (-${percent}%)`,
+        message: `${item.title.substring(0, 60)}...`
+    });
 }
