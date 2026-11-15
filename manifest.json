@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BD Price Tracker",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Track product prices on Daraz BD and get alerts when prices drop.",
   "icons": {
     "16": "icons/icon16.png",

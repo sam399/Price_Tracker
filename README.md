@@ -5,7 +5,7 @@ A lightweight, privacy-focused browser extension that tracks product prices on [
 Built with **Manifest V3**, modern JavaScript, and clean store packaging for Microsoft Edge Add-ons and Google Chrome Web Store.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-1.0.1-green.svg)
+![Version](https://img.shields.io/badge/version-1.0.2-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Edge%20%7C%20Chrome-orange.svg)
 
 ---
