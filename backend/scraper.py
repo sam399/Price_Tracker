@@ -15,7 +15,48 @@ HEADERS = {
 }
 
 async def scrape_daraz_product(url: str) -> Optional[Dict[str, Any]]:
-    """Fetch and extract product data from Daraz BD using server-side metadata."""
+    """Fetch and extract live product data from Daraz BD, including flash sales & campaign discounts."""
+    
+    # -----------------------------------------------------------------
+    # STRATEGY 1: Daraz Catalog AJAX API (Matches live campaign/flash sale price)
+    # -----------------------------------------------------------------
+    id_match = re.search(r'-i(\d+)', url)
+    if id_match:
+        item_id = id_match.group(1)
+        api_url = f"https://www.daraz.com.bd/catalog/?ajax=true&q={item_id}"
+        async with httpx.AsyncClient(headers=HEADERS, timeout=12.0) as client:
+            try:
+                api_res = await client.get(api_url)
+                if api_res.status_code == 200:
+                    json_data = api_res.json()
+                    items = json_data.get("mods", {}).get("listItems", [])
+                    matched = next((i for i in items if str(i.get("itemId") or i.get("nid")) == str(item_id)), None)
+                    if not matched and items:
+                        matched = items[0]
+
+                    if matched and matched.get("price"):
+                        price_num = float(re.sub(r"[^\d.]", "", str(matched["price"])))
+                        orig_num = float(re.sub(r"[^\d.]", "", str(matched.get("originalPrice", "")))) if matched.get("originalPrice") else price_num
+                        img_url = matched.get("image", "")
+                        if img_url.startswith("//"):
+                            img_url = "https:" + img_url
+
+                        if price_num > 0:
+                            return {
+                                "title": matched.get("name", "").strip(),
+                                "price": price_num,
+                                "original_price": orig_num if orig_num > price_num else price_num,
+                                "image": img_url,
+                                "sku": str(matched.get("skuId") or item_id),
+                                "url": url,
+                                "store": "daraz_bd"
+                            }
+            except Exception as e:
+                logger.debug(f"Catalog AJAX API failed for {item_id}: {e}")
+
+    # -----------------------------------------------------------------
+    # STRATEGY 2: Server-rendered HTML fallback
+    # -----------------------------------------------------------------
     async with httpx.AsyncClient(headers=HEADERS, follow_redirects=True, timeout=15.0) as client:
         try:
             response = await client.get(url)
@@ -27,7 +68,7 @@ async def scrape_daraz_product(url: str) -> Optional[Dict[str, Any]]:
             logger.error(f"Network error fetching {url}: {e}")
             return None
 
-    # Strategy 1: pdpTrackingData (Alibaba server-rendered payload)
+    # Strategy 2A: pdpTrackingData
     try:
         pdp_match = re.search(r'var\s+pdpTrackingData\s*=\s*"([\s\S]*?)";', html)
         if pdp_match:
@@ -48,7 +89,7 @@ async def scrape_daraz_product(url: str) -> Optional[Dict[str, Any]]:
     except Exception as e:
         logger.debug(f"pdpTrackingData parse error: {e}")
 
-    # Strategy 2: Schema.org ld+json
+    # Strategy 2B: Schema.org ld+json
     try:
         ld_matches = re.finditer(r'<script type="application/ld\+json">([\s\S]*?)</script>', html, re.IGNORECASE)
         for match in ld_matches:
@@ -70,33 +111,12 @@ async def scrape_daraz_product(url: str) -> Optional[Dict[str, Any]]:
     except Exception as e:
         logger.debug(f"ld+json parse error: {e}")
 
-    # Strategy 3: Open Graph and price regex fallback
-    price_match = re.search(r'"pdt_price":\s*"৳?\s*([0-9,.]+)"', html)
-    if price_match:
-        price = float(price_match.group(1).replace(",", ""))
-        og_title = re.search(r'<meta property="og:title" content="([^"]+)"', html, re.IGNORECASE)
-        og_image = re.search(r'<meta property="og:image" content="([^"]+)"', html, re.IGNORECASE)
-        return {
-            "title": og_title.group(1).replace(" | Daraz.com.bd", "").strip() if og_title else "Daraz Product",
-            "price": price,
-            "image": og_image.group(1) if og_image else "",
-            "sku": "",
-            "url": url,
-            "store": "daraz_bd"
-        }
-
     return None
 
 async def scrape_product(url: str) -> Optional[Dict[str, Any]]:
     """Universal dispatcher for scraping products across different stores."""
     if "daraz.com.bd" in url:
         return await scrape_daraz_product(url)
-    
-    # Ready for future stores:
-    # elif "startech.com.bd" in url:
-    #     return await scrape_startech_product(url)
-    # elif "ryans.com" in url:
-    #     return await scrape_ryans_product(url)
     
     logger.warning(f"Unsupported store URL: {url}")
     return None

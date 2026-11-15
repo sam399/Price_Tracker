@@ -114,18 +114,38 @@ async function saveProduct(product) {
     const { watchlist = [], backendUrl = '', telegramChatId = '' } = await chrome.storage.local.get(['watchlist', 'backendUrl', 'telegramChatId']);
 
     const cleanUrl = product.url.split('?')[0];
-    const exists = watchlist.some(item => (item.url || '').split('?')[0] === cleanUrl);
+    const existingIndex = watchlist.findIndex(item => (item.url || '').split('?')[0] === cleanUrl);
 
-    if (exists) {
-        showToast("Already tracking this item!");
-        return;
+    // If item already in watchlist, update price and metadata
+    if (existingIndex !== -1) {
+        const item = watchlist[existingIndex];
+        const oldPrice = item.price;
+        item.title = product.title || item.title;
+        item.image = product.image || item.image;
+        if (product.initialPrice && (!item.initialPrice || item.initialPrice < product.initialPrice)) {
+            item.initialPrice = product.initialPrice;
+        }
+
+        if (product.price && product.price !== oldPrice) {
+            item.price = product.price;
+            if (!Array.isArray(item.history)) item.history = [];
+            item.history.push({ price: product.price, date: new Date().toISOString() });
+            item.lowestPrice = Math.min(item.lowestPrice || oldPrice, product.price);
+            await chrome.storage.local.set({ watchlist });
+            displayList();
+            showToast(`Updated price: ৳${product.price}! 🎯`);
+            return;
+        } else {
+            showToast(`Already tracking at ৳${product.price}`);
+            return;
+        }
     }
 
     const newItem = {
         id: product.id || ('item_' + Date.now()),
         title: product.title,
         price: product.price,
-        initialPrice: product.price,
+        initialPrice: product.initialPrice || product.price,
         lowestPrice: product.price,
         image: product.image || '',
         url: product.url,
@@ -216,7 +236,7 @@ async function displayList() {
         currentPrice.textContent = `৳ ${item.price.toLocaleString()}`;
         priceRow.appendChild(currentPrice);
 
-        // Price drop badge
+        // Price drop badge (Compares current price to initial / original price)
         if (item.initialPrice && item.price < item.initialPrice) {
             const oldPrice = document.createElement('span');
             oldPrice.className = "original-price";
@@ -244,7 +264,7 @@ async function displayList() {
         link.textContent = "Buy ↗";
         linksGroup.appendChild(link);
 
-        // Keepa-style price chart link if backendId exists or backendUrl is configured
+        // Keepa-style price chart link if backendId exists
         if (backendUrl && item.backendId) {
             const chartLink = document.createElement('a');
             chartLink.className = "chart-link";
@@ -296,7 +316,8 @@ refreshBtn.addEventListener('click', () => {
         refreshBtn.classList.remove('spinning');
         if (response && response.success) {
             displayList();
-            showToast(`Done! Checked ${response.summary.total} items (${response.summary.drops} drops).`);
+            const { total, updated, drops } = response.summary;
+            showToast(`Done! Checked ${total} items (${updated} updated, ${drops} drops).`);
         } else {
             showToast("Failed to refresh prices.");
         }

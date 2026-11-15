@@ -13,7 +13,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     }
 });
 
-// 3. Listen for manual check requests from popup
+// 3. Listen for manual refresh requests from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "refreshAllPrices") {
         checkAllPrices().then((summary) => {
@@ -25,17 +25,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-// 4. Main price check runner (Runs silently via fetch, NO tabs opened!)
+// 4. Main price check runner
 async function checkAllPrices() {
-    console.log("🚀 Starting silent price check...");
+    console.log("🚀 Starting background price check...");
     const { watchlist = [] } = await chrome.storage.local.get({ watchlist: [] });
 
     if (watchlist.length === 0) {
         console.log("Watchlist is empty.");
-        return { total: 0, drops: 0 };
+        return { total: 0, updated: 0, drops: 0 };
     }
 
     let dropsCount = 0;
+    let updatedCount = 0;
     let hasUpdates = false;
 
     for (let i = 0; i < watchlist.length; i++) {
@@ -48,7 +49,7 @@ async function checkAllPrices() {
                 const oldPrice = item.price;
                 const newPrice = latestData.price;
 
-                // Ensure price history exists
+                // Ensure price history array exists
                 if (!Array.isArray(item.history)) {
                     item.history = [{ price: oldPrice, date: item.dateAdded || new Date().toISOString() }];
                 }
@@ -59,21 +60,37 @@ async function checkAllPrices() {
                     hasUpdates = true;
                 }
 
-                // Detect price drop
-                if (newPrice < oldPrice) {
-                    dropsCount++;
-                    const diff = oldPrice - newPrice;
-                    const percent = Math.round((diff / oldPrice) * 100);
-
-                    triggerPriceDropNotification(item, oldPrice, newPrice, percent);
-                    item.lowestPrice = Math.min(item.lowestPrice || oldPrice, newPrice);
+                // If title was missing, save it
+                if (!item.title && latestData.title) {
+                    item.title = latestData.title;
+                    hasUpdates = true;
                 }
 
-                // Record new price if changed
+                // Preserve or set initialPrice / originalPrice for discount badges
+                if (latestData.originalPrice && latestData.originalPrice > newPrice) {
+                    if (!item.initialPrice || item.initialPrice < latestData.originalPrice) {
+                        item.initialPrice = latestData.originalPrice;
+                        hasUpdates = true;
+                    }
+                }
+
+                // Detect price change
                 if (newPrice !== oldPrice) {
+                    updatedCount++;
+                    hasUpdates = true;
+
+                    // Detect price drop
+                    if (newPrice < oldPrice) {
+                        dropsCount++;
+                        const diff = oldPrice - newPrice;
+                        const percent = Math.round((diff / oldPrice) * 100);
+
+                        triggerPriceDropNotification(item, oldPrice, newPrice, percent);
+                        item.lowestPrice = Math.min(item.lowestPrice || oldPrice, newPrice);
+                    }
+
                     item.price = newPrice;
                     item.history.push({ price: newPrice, date: new Date().toISOString() });
-                    hasUpdates = true;
                 }
 
                 item.lastChecked = new Date().toISOString();
@@ -84,20 +101,64 @@ async function checkAllPrices() {
             item.status = "error";
         }
 
-        // Polite delay between background requests to avoid rate limits
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        // Polite delay between requests
+        await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
     if (hasUpdates) {
         await chrome.storage.local.set({ watchlist });
     }
 
-    console.log(`✅ Price check completed. Checked: ${watchlist.length}, Drops: ${dropsCount}`);
-    return { total: watchlist.length, drops: dropsCount };
+    console.log(`✅ Price check completed. Checked: ${watchlist.length}, Updated: ${updatedCount}, Drops: ${dropsCount}`);
+    return { total: watchlist.length, updated: updatedCount, drops: dropsCount };
 }
 
-// 5. Silent background fetch & HTML extraction (No CORS issues in MV3 Service Worker with host_permissions)
+// 5. Smart Product Fetcher: Uses Daraz Catalog AJAX API for live flash sale/campaign prices, with HTML fallback
 async function fetchProductData(url) {
+    // -------------------------------------------------------------
+    // STRATEGY 1: Daraz Catalog AJAX API (Accurate live campaign/flash sale price)
+    // -------------------------------------------------------------
+    const idMatch = url.match(/-i(\d+)/);
+    if (idMatch) {
+        const itemId = idMatch[1];
+        try {
+            const apiUrl = `https://www.daraz.com.bd/catalog/?ajax=true&q=${itemId}`;
+            const apiRes = await fetch(apiUrl, {
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Accept": "application/json"
+                }
+            });
+
+            if (apiRes.ok) {
+                const json = await apiRes.json();
+                const items = json.mods?.listItems || [];
+                // Match exact item by itemId or nid
+                const matched = items.find(i => String(i.itemId || i.nid) === String(itemId)) || items[0];
+
+                if (matched && matched.price) {
+                    const priceNum = parseFloat(String(matched.price).replace(/[^\d.]/g, ''));
+                    const origNum = matched.originalPrice ? parseFloat(String(matched.originalPrice).replace(/[^\d.]/g, '')) : 0;
+                    const imgUrl = matched.image ? (matched.image.startsWith('//') ? 'https:' + matched.image : matched.image) : "";
+
+                    if (priceNum > 0) {
+                        return {
+                            title: matched.name || "",
+                            price: priceNum,
+                            originalPrice: origNum > priceNum ? origNum : priceNum,
+                            image: imgUrl
+                        };
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn("Daraz catalog API query failed, falling back to HTML fetch:", e);
+        }
+    }
+
+    // -------------------------------------------------------------
+    // STRATEGY 2: Fallback to HTML fetch & extraction
+    // -------------------------------------------------------------
     const response = await fetch(url, {
         headers: {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -113,9 +174,9 @@ async function fetchProductData(url) {
     return parseDarazHtml(html);
 }
 
-// 6. Resilient HTML parser: uses embedded pdpTrackingData or JSON-LD
+// 6. Resilient HTML parser fallback
 function parseDarazHtml(html) {
-    // Strategy 1: pdpTrackingData (Server-rendered JSON in Daraz HTML)
+    // Strategy A: pdpTrackingData
     try {
         const pdpMatch = html.match(/var\s+pdpTrackingData\s*=\s*"([\s\S]*?)";/);
         if (pdpMatch) {
@@ -132,11 +193,9 @@ function parseDarazHtml(html) {
                 };
             }
         }
-    } catch (e) {
-        console.warn("pdpTrackingData parse error:", e);
-    }
+    } catch (e) {}
 
-    // Strategy 2: application/ld+json (Schema.org metadata)
+    // Strategy B: application/ld+json
     try {
         const scripts = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi)];
         for (const match of scripts) {
@@ -153,11 +212,9 @@ function parseDarazHtml(html) {
                 }
             }
         }
-    } catch (e) {
-        console.warn("ld+json parse error:", e);
-    }
+    } catch (e) {}
 
-    // Strategy 3: Regex fallbacks for Open Graph & visual tags
+    // Strategy C: Regex fallback
     const priceMatch = html.match(/"pdt_price":\s*"৳?\s*([0-9,.]+)"/);
     if (priceMatch) {
         const price = parseFloat(priceMatch[1].replace(/,/g, ""));
