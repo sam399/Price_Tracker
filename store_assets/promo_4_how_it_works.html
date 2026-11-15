@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1280px;
+      height: 800px;
+      overflow: hidden;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: radial-gradient(circle at 85% 15%, #0d2850 0%, #061024 55%, #030814 100%);
+      color: #ffffff;
+      position: relative;
+    }
+    /* Subtle decorative background grids and glows */
+    .bg-glow-1 {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(248, 86, 6, 0.15) 0%, rgba(248, 86, 6, 0) 70%);
+      top: -150px;
+      right: 100px;
+      pointer-events: none;
+    }
+    .bg-glow-2 {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(0, 230, 118, 0.12) 0%, rgba(0, 230, 118, 0) 70%);
+      bottom: -100px;
+      left: 300px;
+      pointer-events: none;
+    }
+    .grid-lines {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    /* Left info panel */
+    .content-container {
+      position: relative;
+      z-index: 10;
+      width: 1280px;
+      height: 800px;
+      padding: 60px 70px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .left-col {
+      width: 480px;
+      display: flex;
+      flex-direction: column;
+    }
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #00e676;
+      width: fit-content;
+      margin-bottom: 22px;
+    }
+    .main-title {
+      font-size: 44px;
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 18px;
+    }
+    .accent-green { color: #00e676; }
+    .accent-orange { color: #f85606; }
+    .subtitle {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #94a3b8;
+      margin-bottom: 30px;
+    }
+    .features-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 40px;
+    }
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #e2e8f0;
+    }
+    .check-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(0, 230, 118, 0.2);
+      color: #00e676;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #64748b;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .footer-brand span {
+      color: #f85606;
+      font-weight: 800;
+    }
+    /* Right visuals mockup area */
+    .right-col {
+      width: 620px;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
+</head>
+
+<style>
+  .step-card {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+    border-radius: 16px;
+    padding: 34px 28px;
+    width: 350px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  }
+  .step-num {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: #f85606;
+    color: white;
+    font-size: 20px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    box-shadow: 0 6px 18px rgba(248, 86, 6, 0.4);
+  }
+  .step-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 12px;
+  }
+  .step-desc {
+    font-size: 14px;
+    color: #94a3b8;
+    line-height: 1.6;
+  }
+</style>
+<body>
+  <div class="grid-lines"></div>
+  <div class="bg-glow-1" style="top:50%; left:50%; transform:translate(-50%, -50%); width:800px; height:800px;"></div>
+  
+  <div style="padding: 60px 80px; display:flex; flex-direction:column; align-items:center; text-align:center;">
+    <div class="pill-badge" style="margin-bottom: 16px;">EFFORTLESS SAVINGS</div>
+    <h1 style="font-size: 44px; font-weight: 800; letter-spacing: -1px; margin-bottom: 14px;">
+      How It Works: <span class="accent-orange">Save in 3 Simple Steps</span>
+    </h1>
+    <p style="font-size: 16px; color: #94a3b8; max-width: 650px; margin-bottom: 50px;">
+      No registration, zero accounts, and no technical setup required. Install the extension and start saving money on Daraz Bangladesh today.
+    </p>
+
+    <!-- 3 Steps Grid -->
+    <div style="display:flex; gap: 26px; justify-content:center; width: 100%;">
+      <!-- Step 1 -->
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <div style="font-size: 32px; margin-bottom: 14px;">🛒</div>
+        <div class="step-title">Browse Daraz BD</div>
+        <div class="step-desc">Go to any product page on daraz.com.bd — gadgets, fashion, groceries, or beauty items.</div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step-card" style="border-color: rgba(248, 86, 6, 0.4);">
+        <div class="step-num">2</div>
+        <div style="font-size: 32px; margin-bottom: 14px;">🎯</div>
+        <div class="step-title">1-Click Track</div>
+        <div class="step-desc">Open the BD Price Tracker extension and click "+ Track This Product". The item is instantly saved.</div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step-card" style="border-color: rgba(0, 230, 118, 0.4);">
+        <div class="step-num" style="background:#22c55e; box-shadow: 0 6px 18px rgba(34, 197, 94, 0.4);">3</div>
+        <div style="font-size: 32px; margin-bottom: 14px;">🔔</div>
+        <div class="step-title">Get Drop Alerts</div>
+        <div class="step-desc">We silently watch the price in the background and pop up a desktop notification when it drops!</div>
+      </div>
+    </div>
+
+    <!-- Bottom Features Strip -->
+    <div style="margin-top: 48px; display:flex; gap: 36px; color: #cbd5e1; font-size: 13px; font-weight: 600;">
+      <span>🔒 100% Private (Local Storage)</span>
+      <span>•</span>
+      <span>⚡ Lightweight Manifest V3</span>
+      <span>•</span>
+      <span>🇧🇩 Tailored for Bangladesh Shoppers</span>
+    </div>
+  </div>
+</body>
+</html>

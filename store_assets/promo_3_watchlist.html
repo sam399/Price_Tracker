@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1280px;
+      height: 800px;
+      overflow: hidden;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: radial-gradient(circle at 85% 15%, #0d2850 0%, #061024 55%, #030814 100%);
+      color: #ffffff;
+      position: relative;
+    }
+    /* Subtle decorative background grids and glows */
+    .bg-glow-1 {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(248, 86, 6, 0.15) 0%, rgba(248, 86, 6, 0) 70%);
+      top: -150px;
+      right: 100px;
+      pointer-events: none;
+    }
+    .bg-glow-2 {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(0, 230, 118, 0.12) 0%, rgba(0, 230, 118, 0) 70%);
+      bottom: -100px;
+      left: 300px;
+      pointer-events: none;
+    }
+    .grid-lines {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    /* Left info panel */
+    .content-container {
+      position: relative;
+      z-index: 10;
+      width: 1280px;
+      height: 800px;
+      padding: 60px 70px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .left-col {
+      width: 480px;
+      display: flex;
+      flex-direction: column;
+    }
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #00e676;
+      width: fit-content;
+      margin-bottom: 22px;
+    }
+    .main-title {
+      font-size: 44px;
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 18px;
+    }
+    .accent-green { color: #00e676; }
+    .accent-orange { color: #f85606; }
+    .subtitle {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #94a3b8;
+      margin-bottom: 30px;
+    }
+    .features-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 40px;
+    }
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #e2e8f0;
+    }
+    .check-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(0, 230, 118, 0.2);
+      color: #00e676;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #64748b;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .footer-brand span {
+      color: #f85606;
+      font-weight: 800;
+    }
+    /* Right visuals mockup area */
+    .right-col {
+      width: 620px;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="grid-lines"></div>
+  <div class="bg-glow-1"></div>
+  <div class="bg-glow-2"></div>
+  <div class="content-container">
+    <div class="left-col">
+      <div class="pill-badge">YOUR WATCHLIST</div>
+      <h1 class="main-title">Every price,<br><span class="accent-green">one click away.</span></h1>
+      <p class="subtitle">All your tracked Daraz items in one clean, beautiful popup. Check live prices, discount pills, and visit the product page with a single tap.</p>
+      
+      <div class="features-list">
+        <div class="feature-item">
+          <div class="check-icon">✓</div>
+          <span>Dynamic discount tags (▼ 41%, ▼ 50%, ▼ 42%)</span>
+        </div>
+        <div class="feature-item">
+          <div class="check-icon">✓</div>
+          <span>Instant manual refresh (🔄) button</span>
+        </div>
+        <div class="feature-item">
+          <div class="check-icon">✓</div>
+          <span>Automatic duplicate URL cleaning (?spm=...)</span>
+        </div>
+      </div>
+
+      <div class="footer-brand">
+        ⭐ <span>BD PRICE TRACKER</span> &nbsp;|&nbsp; 100% CLIENT-SIDE
+      </div>
+    </div>
+
+    <div class="right-col" style="gap: 30px;">
+      <!-- Exact Extension Popup Mockup -->
+      <div style="width: 370px; background: #f7f8fa; border-radius: 14px; box-shadow: 0 30px 70px rgba(0,0,0,0.6); overflow: hidden; border: 1.5px solid rgba(255,255,255,0.2);">
+        <!-- Header -->
+        <div style="background: #f85606; color: white; padding: 14px 18px; display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap: 8px;">
+            <div style="width: 24px; height: 24px; border-radius: 6px; background: white; color: #f85606; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:13px;">৳</div>
+            <span style="font-size: 15px; font-weight: 700;">Daraz BD Price Tracker</span>
+          </div>
+          <div style="display:flex; gap: 8px;">
+            <div style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.25); display:flex; align-items:center; justify-content:center; font-size:13px; cursor:pointer;">🔄</div>
+            <div style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.25); display:flex; align-items:center; justify-content:center; font-size:13px; cursor:pointer;">⚙️</div>
+          </div>
+        </div>
+
+        <!-- Watchlist header -->
+        <div style="padding: 14px 16px 8px 16px; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size: 12px; font-weight: 700; color: #475569; text-transform:uppercase; letter-spacing:0.5px;">YOUR WATCHLIST</span>
+          <span style="background: #e2e8f0; color: #334155; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">3 items</span>
+        </div>
+
+        <!-- Watchlist items -->
+        <div style="padding: 0 14px 16px 14px; display:flex; flex-direction:column; gap: 10px;">
+          <!-- Item 1: Sauvage -->
+          <div style="background: white; border-radius: 8px; padding: 10px; display:flex; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #edf2f7;">
+            <div style="width: 56px; height: 56px; border-radius: 6px; background: #0f172a; display:flex; align-items:center; justify-content:center; color:white; font-size:22px; flex-shrink:0;">🧴</div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size: 12px; font-weight: 600; color: #1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Sauvage Inspired Perfume for Men</div>
+              <div style="display:flex; align-items:baseline; gap: 6px; margin: 3px 0;">
+                <span style="font-size: 15px; font-weight: 800; color: #f85606;">৳ 177</span>
+                <span style="font-size: 11px; color: #94a3b8; text-decoration:line-through;">৳ 300</span>
+                <span style="font-size: 10px; font-weight: 800; color: #16a34a; background: #dcfce7; padding: 1px 5px; border-radius: 4px;">▼ 41%</span>
+              </div>
+              <span style="font-size: 11px; color: #2563eb; font-weight: 500;">Buy on Daraz ↗</span>
+            </div>
+          </div>
+
+          <!-- Item 2: Rexona -->
+          <div style="background: white; border-radius: 8px; padding: 10px; display:flex; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #edf2f7;">
+            <img src="https://bd-live-21.slatic.net/kf/S2862261898014320b9ef652cf4ddc5b8e.png" style="width: 56px; height: 56px; border-radius: 6px; object-fit: cover; flex-shrink:0; background: #f1f5f9;">
+            <div style="flex:1; min-width:0;">
+              <div style="font-size: 12px; font-weight: 600; color: #1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Rexona Shower Clean Roll On 45ml</div>
+              <div style="display:flex; align-items:baseline; gap: 6px; margin: 3px 0;">
+                <span style="font-size: 15px; font-weight: 800; color: #f85606;">৳ 239</span>
+                <span style="font-size: 11px; color: #94a3b8; text-decoration:line-through;">৳ 409</span>
+                <span style="font-size: 10px; font-weight: 800; color: #16a34a; background: #dcfce7; padding: 1px 5px; border-radius: 4px;">▼ 42%</span>
+              </div>
+              <span style="font-size: 11px; color: #2563eb; font-weight: 500;">Buy on Daraz ↗</span>
+            </div>
+          </div>
+
+          <!-- Item 3: SuperCare Face Wash -->
+          <div style="background: white; border-radius: 8px; padding: 10px; display:flex; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #edf2f7;">
+            <img src="https://bd-live-21.slatic.net/kf/Sda97481c94414bf0bef0a81e560010a5c.jpg" style="width: 56px; height: 56px; border-radius: 6px; object-fit: cover; flex-shrink:0; background: #f1f5f9;">
+            <div style="flex:1; min-width:0;">
+              <div style="font-size: 12px; font-weight: 600; color: #1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">SuperCare Oil Control Face Wash (BOGO)</div>
+              <div style="display:flex; align-items:baseline; gap: 6px; margin: 3px 0;">
+                <span style="font-size: 15px; font-weight: 800; color: #f85606;">৳ 250</span>
+                <span style="font-size: 11px; color: #94a3b8; text-decoration:line-through;">৳ 500</span>
+                <span style="font-size: 10px; font-weight: 800; color: #16a34a; background: #dcfce7; padding: 1px 5px; border-radius: 4px;">▼ 50%</span>
+              </div>
+              <span style="font-size: 11px; color: #2563eb; font-weight: 500;">Buy on Daraz ↗</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Callout Badges on Right -->
+      <div style="display:flex; flex-direction:column; gap: 16px;">
+        <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 14px 18px; width: 220px;">
+          <div style="font-size: 13px; font-weight: 700; color: #00e676; margin-bottom: 3px;">1-Click Refresh</div>
+          <div style="font-size: 11px; color: #94a3b8; line-height: 1.4;">Verify background checks anytime with the refresh button.</div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 14px 18px; width: 220px;">
+          <div style="font-size: 13px; font-weight: 700; color: #38bdf8; margin-bottom: 3px;">Discount Pills</div>
+          <div style="font-size: 11px; color: #94a3b8; line-height: 1.4;">Automatic percentage calculation against original MRP.</div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 14px 18px; width: 220px;">
+          <div style="font-size: 13px; font-weight: 700; color: #f85606; margin-bottom: 3px;">Clean URLs</div>
+          <div style="font-size: 11px; color: #94a3b8; line-height: 1.4;">Strips tracking clutter (?spm=...) for clean bookmarks.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
